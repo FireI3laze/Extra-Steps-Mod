@@ -15,7 +15,9 @@ public class GenericItemColoring implements ItemColor {
 
         if (tag != null && tag.contains("color")) {
             return tag.getInt("color");
-        } else if (stack.is(ModItems.LYE_WATER_GLASS_BOTTLE.get())) return 0xAAC4C4CC;
+        } else if (stack.is(ModItems.LYE_WATER_GLASS_BOTTLE.get())) {
+            return 0xAAC4C4CC;
+        }
 
         return 0xFFFFFF;
     }

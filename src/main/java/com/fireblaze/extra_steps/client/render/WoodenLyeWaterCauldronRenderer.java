@@ -43,7 +43,6 @@ public class WoodenLyeWaterCauldronRenderer implements BlockEntityRenderer<Woode
         List<Integer>[] colorLists = cauldron.getUsedColors();
         int maxSlotsPerLevel = 3;
         int totalColors = cauldron.getUsedSlots();
-        //System.out.println(totalColors);
         if (totalColors <= 0) return;
 
         poseStack.pushPose();

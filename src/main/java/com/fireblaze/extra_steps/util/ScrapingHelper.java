@@ -19,7 +19,7 @@ public class ScrapingHelper {
         if (matchesIngredient) {
             ItemStack held = player.getMainHandItem();
 
-            return held.getItem() instanceof AxeItem || held.getItem() instanceof SwordItem;
+            return recipe.map(processingRecipe -> processingRecipe.isToolValid(held)).orElse(false);
         }
 
         return false;

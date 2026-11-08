@@ -1,6 +1,7 @@
 package com.fireblaze.extra_steps.cauldron.client.cauldron;
 
 import com.fireblaze.extra_steps.cauldron.client.ClientCauldronCache;
+import com.fireblaze.extra_steps.config.ModConfigHandler;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -121,16 +122,86 @@ public class CauldronItemRenderer {
 
             var model = itemRenderer.getModel(stack, mc.level, mc.player, 0);
 
-            itemRenderer.render(
-                    stack,
-                    ItemDisplayContext.FIXED,
-                    false,
-                    poseStack,
-                    buffer,
-                    packedLight,
-                    OverlayTexture.NO_OVERLAY,
-                    model
-            );
+            int count = stack.getCount();
+            int renderCount = Math.min(4, 1 + (count / 16));
+
+
+            if (!ModConfigHandler.enableCauldronIngredientStackSizeRendering.get()) {
+
+                itemRenderer.render(
+                        stack,
+                        ItemDisplayContext.FIXED,
+                        false,
+                        poseStack,
+                        buffer,
+                        packedLight,
+                        OverlayTexture.NO_OVERLAY,
+                        model
+                );
+            } else {
+                boolean isBlock = stack.getItem() instanceof net.minecraft.world.item.BlockItem;
+
+                float seed = hash(pos, index);
+
+                if (isBlock) {
+
+                    poseStack.pushPose();
+
+                    // 1–64 → 0.45 → 0.85 scale (smooth growth)
+                    float t = Math.min(count / 64f, 1f);
+                    t = t * t; // easing (optional aber nicer)
+
+                    float scale = 0.8f + t * 0.2f;
+
+                    poseStack.scale(scale, scale, scale);
+
+                    // optional: stabiler als Items
+                    poseStack.translate(0, 0.02f, 0);
+
+                    itemRenderer.render(
+                            stack,
+                            ItemDisplayContext.FIXED,
+                            false,
+                            poseStack,
+                            buffer,
+                            packedLight,
+                            OverlayTexture.NO_OVERLAY,
+                            model
+                    );
+
+                    poseStack.popPose();
+                }
+
+                else {
+                    for (int i = 0; i < renderCount; i++) {
+
+                        poseStack.pushPose();
+                        float scale = 0.8f;
+
+                        poseStack.scale(scale, scale, scale);
+                        float yOffset = i * 0.03f + ((i % 2 == 0) ? 0.05f : -0.05f);
+
+                        poseStack.translate(
+                                (seed - 0.5f) * 0.07f,
+                                yOffset,
+                                (seed - 0.5f) * 0.07f * i * 4
+                        );
+
+                        itemRenderer.render(
+                                stack,
+                                ItemDisplayContext.FIXED,
+                                false,
+                                poseStack,
+                                buffer,
+                                packedLight,
+                                OverlayTexture.NO_OVERLAY,
+                                model
+                        );
+
+                        poseStack.popPose();
+                    }
+                }
+            }
 
             poseStack.popPose();
 

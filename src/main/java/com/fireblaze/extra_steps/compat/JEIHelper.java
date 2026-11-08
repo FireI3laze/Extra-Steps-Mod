@@ -10,12 +10,9 @@ import net.minecraft.world.level.block.Blocks;
 public class JEIHelper {
     public static ItemStack getIconForMode(ProcessingMode mode) {
         return switch (mode) {
-            case DRYING, SCRAPING -> new ItemStack(ModBlocks.DRYING_RACK.get());
-            case BRUSHING -> new ItemStack(ModItems.WOOL_BRUSH.get());
+            case DRYING, SCRAPING, BRUSHING -> new ItemStack(ModBlocks.DRYING_RACK.get());
             case COMPRESSING -> new ItemStack(ModBlocks.BASKET.get());
-            case MIXING -> new ItemStack(Blocks.CAULDRON);
-            //case SPINNING -> new ItemStack(ModBlocks.SPINNING_WHEEL.get());
-            case CLEANING, LYE_WATER -> new ItemStack(Blocks.CAULDRON);
+            case CLEANING, MIXING, LYE_WATER -> new ItemStack(ModBlocks.WOODEN_CAULDRON.get());
         };
     }
 }

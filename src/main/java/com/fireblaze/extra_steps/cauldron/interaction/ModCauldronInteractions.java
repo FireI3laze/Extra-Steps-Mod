@@ -1,6 +1,7 @@
 package com.fireblaze.extra_steps.cauldron.interaction;
 
 import com.fireblaze.extra_steps.blockentity.LyeWaterCauldronBlockEntity;
+import com.fireblaze.extra_steps.cauldron.data.CauldronMixingData;
 import com.fireblaze.extra_steps.client.color.GenericColors;
 import com.fireblaze.extra_steps.item.ModLeatherArmorItem;
 import com.fireblaze.extra_steps.processing.ProcessingMode;
@@ -11,6 +12,7 @@ import com.fireblaze.extra_steps.registry.ModRecipeTypes;
 import com.fireblaze.extra_steps.util.CauldronInteractionHelper;
 import com.fireblaze.extra_steps.util.GenericColorHelper;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
 import net.minecraft.core.cauldron.CauldronInteraction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -110,6 +112,18 @@ public class ModCauldronInteractions {
         if (currentLevel == 0) return InteractionResult.PASS;
 
         if (!level.isClientSide) {
+            // Verhindern wenn Mixing-Items im Cauldron liegen
+            CauldronMixingData data = CauldronMixingData.get(level);
+
+            if (data != null) {
+                NonNullList<ItemStack> inv = data.getInventory(pos);
+
+                boolean hasItems = inv.stream().anyMatch(stackInCauldron -> !stackInCauldron.isEmpty());
+
+                if (hasItems) {
+                    return InteractionResult.PASS;
+                }
+            }
 
             // Alle Processing-Rezepte durchsuchen
             List<ProcessingRecipe> recipes = level.getRecipeManager()

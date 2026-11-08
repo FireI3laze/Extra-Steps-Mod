@@ -7,6 +7,6 @@
     }
   ],
   "result": { "item": "extra_steps:wet_hide" },
-  "stir_count": 2,
+  "interaction_count": 2,
   "water_level_consumption": 1
 }

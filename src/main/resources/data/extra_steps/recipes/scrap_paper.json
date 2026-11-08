@@ -1,0 +1,10 @@
+{
+  "type": "extra_steps:processing",
+  "mode": "scraping",
+  "ingredient": { "item": "extra_steps:paper_block" },
+  "result": "minecraft:paper",
+  "interaction_count": 1,
+  "tools": [
+    { "tag": "minecraft:swords" }
+  ]
+}

@@ -14,12 +14,12 @@ public class ModConfigHandler {
     public static ForgeConfigSpec.BooleanValue enableAlwaysRawWoolDrop;
     public static ForgeConfigSpec.IntValue cauldronFillCheckInterval;
     public static ForgeConfigSpec.IntValue cauldronFillChance;
-    public static ForgeConfigSpec.BooleanValue allowVanillaBrush;
 
     // === Konfigurationswerte (Client) ===
     public static ForgeConfigSpec.BooleanValue enableGlassBlockCulling;
     public static ForgeConfigSpec.DoubleValue maxDistanceColorItemRendering;
 
+    public static ForgeConfigSpec.BooleanValue enableCauldronIngredientStackSizeRendering;
     static {
         // Builder für COMMON
         ForgeConfigSpec.Builder commonBuilder = new ForgeConfigSpec.Builder();
@@ -43,19 +43,12 @@ public class ModConfigHandler {
                 .define("enableAlwaysRawWoolDrop", false);
 
         cauldronFillCheckInterval = commonBuilder
-                .comment("The interval (in ticks) the Wooden Cauldron has a chance to increase it's water fill level due to rain (20 ticks = 1 second)")
+                .comment("The interval (in ticks) the Wooden Cauldron has a chance to increase its water fill level during rain (20 ticks = 1 second)")
                 .defineInRange("cauldronFillCheckInterval", 200, 0, 1200);
 
         cauldronFillChance = commonBuilder
-                .comment("The chance the Wooden Cauldron has to increase it's water fill level due to rain (500 means a 1/500 chance per interval chosen above)")
+                .comment("The chance the Wooden Cauldron has to increase its water fill level during rain (500 means a 1/500 chance per interval chosen above)")
                 .defineInRange("cauldronFillChance", 450, 1, 10000);
-
-        commonBuilder.pop();
-        commonBuilder.push("Tools");
-
-        allowVanillaBrush = commonBuilder
-                .comment("If enabled, the vanilla BrushItem can also be used for brushing")
-                .define("allowVanillaBrush", false);
 
         commonBuilder.pop();
 
@@ -65,15 +58,25 @@ public class ModConfigHandler {
         // Builder für CLIENT
         ForgeConfigSpec.Builder clientBuilder = new ForgeConfigSpec.Builder();
 
-        clientBuilder.comment("Extra Steps - Client Settings (Experimental)");
-
-        enableGlassBlockCulling = clientBuilder
-                .comment("Glass Block Culling - Removes the inner lines of the glass block -> makes them invisible when looking through transparent blocks")
-                .define("isEnabled", false);
+        clientBuilder.comment("Extra Steps - Client Settings");
+        clientBuilder.push("Cauldron");
 
         maxDistanceColorItemRendering = clientBuilder
                 .comment("The max distance at which color items are rendered on the Cauldron")
                 .defineInRange("maxDistanceColorItemRendering", 5.0, 0.0, 1000.0);
+
+        enableCauldronIngredientStackSizeRendering = clientBuilder
+                .comment("If enabled, visualises the stack size of the ingredients in the cauldron (for mixture recipes)")
+                .define("cauldronIngredientStackSizeRenderingIsEnabled", true);
+
+        clientBuilder.pop();
+        clientBuilder.push("Deco_Blocks");
+
+        enableGlassBlockCulling = clientBuilder
+                .comment("[EXPERIMENTAL] Glass Block Culling - Removes the inner lines of the glass block -> makes them invisible when looking through transparent blocks")
+                .define("glassBlockCullingIsEnabled", false);
+
+        clientBuilder.pop();
 
         CLIENT_CONFIG = clientBuilder.build();
     }

@@ -23,8 +23,6 @@ public class CauldronPlaceHandler {
 
         if (state.is(ModTags.Blocks.VALID_MIXING_CAULDRONS)) {
 
-            System.out.println("valid");
-
             CauldronMixingData data = CauldronMixingData.get(level);
             if (data == null) return;
 

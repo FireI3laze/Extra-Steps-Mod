@@ -1,0 +1,8 @@
+{
+  "type": "extra_steps:processing",
+  "mode": "compressing",
+  "ingredients": [
+    { "item": "extra_steps:pulp", "count": 4 }
+  ],
+  "result": { "item": "extra_steps:pulp_block" }
+}

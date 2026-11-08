@@ -2,11 +2,7 @@ package com.fireblaze.extra_steps.registry;
 
 import com.fireblaze.extra_steps.ExtraSteps;
 import com.fireblaze.extra_steps.fluid.ModFluids;
-import com.fireblaze.extra_steps.item.ColoredWoolItem;
-import com.fireblaze.extra_steps.item.LyeWaterBucketItem;
-import com.fireblaze.extra_steps.item.LyeWaterGlassBottleItem;
-import com.fireblaze.extra_steps.item.WoolBrushItem;
-import net.minecraft.world.item.BucketItem;
+import com.fireblaze.extra_steps.item.*;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -75,6 +71,20 @@ public class ModItems {
 
     public static final RegistryObject<Item> WET_HIDE =
             ITEMS.register("wet_hide", () -> new Item(new Item.Properties()));
+
+    // Paper Production
+    public static final RegistryObject<Item> PLANT_FIBER =
+            ITEMS.register("plant_fiber", () -> new Item(new Item.Properties()));
+
+    public static final RegistryObject<Item> PULP =
+            ITEMS.register("pulp", () -> new Item(new Item.Properties()));
+
+    public static final RegistryObject<Item> PULP_BLOCK =
+            ITEMS.register("pulp_block", () -> new Item(new Item.Properties()));
+
+    public static final RegistryObject<Item> PAPER_BLOCK =
+            ITEMS.register("paper_block", () -> new NoEnchantItem(new Item.Properties()
+                    .durability(8)));
 
     public static final RegistryObject<Item> LYE_WATER_GLASS_BOTTLE =
             ITEMS.register("lye_water_glass_bottle", () -> new LyeWaterGlassBottleItem(new Item.Properties()));

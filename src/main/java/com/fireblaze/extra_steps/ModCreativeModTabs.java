@@ -36,6 +36,11 @@ public class ModCreativeModTabs {
                         pOutput.accept(ModItems.SCRAPED_HIDE.get());
                         pOutput.accept(ModItems.WET_HIDE.get());
 
+                        pOutput.accept(ModItems.PLANT_FIBER.get());
+                        pOutput.accept(ModItems.PULP.get());
+                        pOutput.accept(ModItems.PULP_BLOCK.get());
+                        pOutput.accept(ModItems.PAPER_BLOCK.get());
+
                         pOutput.accept(ModItems.ASH.get());
                         pOutput.accept(ModItems.LYE_WATER_BUCKET.get());;
                         pOutput.accept(ModItems.LYE_WATER_GLASS_BOTTLE.get());

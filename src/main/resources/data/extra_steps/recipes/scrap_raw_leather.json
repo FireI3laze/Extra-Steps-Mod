@@ -3,5 +3,5 @@
   "mode": "scraping",
   "ingredient": { "tag": "extra_steps:raw_hides" },
   "result": "extra_steps:scraped_hide",
-  "time": 0
+  "interaction_count": 3
 }

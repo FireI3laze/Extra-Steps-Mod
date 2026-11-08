@@ -3,5 +3,12 @@
   "mode": "brushing",
   "ingredient": { "item": "extra_steps:fibered_wool" },
   "result": "extra_steps:brushed_wool",
-  "time": 40
+  "byproducts": [
+    {
+      "item": "minecraft:string",
+      "chance": 0.1,
+      "trigger": "per_interaction"
+    }
+  ],
+  "interaction_count": 4
 }

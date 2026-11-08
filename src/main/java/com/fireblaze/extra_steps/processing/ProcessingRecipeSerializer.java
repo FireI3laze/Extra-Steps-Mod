@@ -2,7 +2,6 @@ package com.fireblaze.extra_steps.processing;
 
 import com.fireblaze.extra_steps.registry.ModRecipeTypes;
 import com.google.gson.JsonObject;
-import net.minecraft.core.NonNullList;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -50,11 +49,15 @@ public class ProcessingRecipeSerializer implements RecipeSerializer<ProcessingRe
         ItemStack result;
         if (json.get("result").isJsonObject()) {
             JsonObject resultJson = json.getAsJsonObject("result");
+
+            ResourceLocation itemId = ResourceLocation.tryParse(resultJson.get("item").getAsString());
+
             result = new ItemStack(
-                    Objects.requireNonNull(ForgeRegistries.ITEMS.getValue(
-                            ResourceLocation.tryParse(resultJson.get("item").getAsString())
-                    ))
+                    Objects.requireNonNull(ForgeRegistries.ITEMS.getValue(itemId))
             );
+
+            int count = resultJson.has("count") ? resultJson.get("count").getAsInt() : 1;
+            result.setCount(count);
         } else {
             String resultItem = json.get("result").getAsString();
             result = new ItemStack(
@@ -64,16 +67,10 @@ public class ProcessingRecipeSerializer implements RecipeSerializer<ProcessingRe
             );
         }
 
-        // 🔹 Result-Menge
-        int resultAmount = json.has("resultAmount")
-                ? json.get("resultAmount").getAsInt()
-                : 1;
-        result.setCount(resultAmount);
-
         // 🔹 Zeit & Mode
         int time = json.has("time") ? json.get("time").getAsInt() : 0;
-        int stirCount = json.has("stir_count")
-                ? json.get("stir_count").getAsInt()
+        int interactionCount = json.has("interaction_count")
+                ? json.get("interaction_count").getAsInt()
                 : 3;
 
         ProcessingMode mode = ProcessingMode.fromString(
@@ -82,7 +79,55 @@ public class ProcessingRecipeSerializer implements RecipeSerializer<ProcessingRe
 
         int waterCost = json.has("water_level_consumption")
                 ? json.get("water_level_consumption").getAsInt()
-                : 0;
+                : 1;
+
+        List<Ingredient> tools = new ArrayList<>();
+
+        if (json.has("tools")) {
+
+            for (var element : json.getAsJsonArray("tools")) {
+
+                JsonObject obj = element.getAsJsonObject();
+
+                tools.add(Ingredient.fromJson(obj));
+            }
+        }
+
+        List<Byproduct> byproducts = new ArrayList<>();
+
+        if (json.has("byproducts")) {
+
+            for (var element : json.getAsJsonArray("byproducts")) {
+
+                JsonObject obj = element.getAsJsonObject();
+
+                ResourceLocation itemId = ResourceLocation.tryParse(
+                        obj.get("item").getAsString()
+                );
+
+                ItemStack stack = new ItemStack(
+                        Objects.requireNonNull(
+                                ForgeRegistries.ITEMS.getValue(itemId)
+                        )
+                );
+
+                int count = obj.has("count")
+                        ? obj.get("count").getAsInt()
+                        : 1;
+
+                stack.setCount(count);
+
+                float chance = obj.has("chance")
+                        ? obj.get("chance").getAsFloat()
+                        : 1.0f;
+
+                ByproductTrigger trigger = obj.has("trigger")
+                        ? ByproductTrigger.fromString(obj.get("trigger").getAsString())
+                        : ByproductTrigger.ON_COMPLETE;
+
+                byproducts.add(new Byproduct(stack, chance, trigger));
+            }
+        }
 
         return new ProcessingRecipe(
                 id,
@@ -93,7 +138,9 @@ public class ProcessingRecipeSerializer implements RecipeSerializer<ProcessingRe
                 mode,
                 ingredientAmount,
                 waterCost,
-                stirCount
+                interactionCount,
+                tools,
+                byproducts
         );
     }
 
@@ -113,12 +160,30 @@ public class ProcessingRecipeSerializer implements RecipeSerializer<ProcessingRe
         int ingredientAmount = buf.readInt();
 
         ItemStack result = buf.readItem();
-        int resultAmount = buf.readInt();
-        result.setCount(resultAmount);
 
         int time = buf.readInt();
         int waterLevelReduction = buf.readInt();
-        int stirCount = buf.readInt();
+        int interactionCount = buf.readInt();
+        int toolCount = buf.readInt();
+        List<Ingredient> tools = new ArrayList<>();
+
+        for (int i = 0; i < toolCount; i++) {
+            tools.add(Ingredient.fromNetwork(buf));
+        }
+        int byproductCount = buf.readInt();
+
+        List<Byproduct> byproducts = new ArrayList<>();
+        for (int i = 0; i < byproductCount; i++) {
+
+            ItemStack stack = buf.readItem();
+            float chance = buf.readFloat();
+
+            ByproductTrigger trigger =
+                    ByproductTrigger.fromString(buf.readUtf());
+
+            byproducts.add(new Byproduct(stack, chance, trigger));
+        }
+
         ProcessingMode mode = ProcessingMode.fromString(buf.readUtf());
 
         RecipeType<ProcessingRecipe> type = ModRecipeTypes.PROCESSING.get();
@@ -132,7 +197,9 @@ public class ProcessingRecipeSerializer implements RecipeSerializer<ProcessingRe
                 mode,
                 ingredientAmount,
                 waterLevelReduction,
-                stirCount
+                interactionCount,
+                tools,
+                byproducts
         );
     }
 
@@ -144,12 +211,26 @@ public class ProcessingRecipeSerializer implements RecipeSerializer<ProcessingRe
             ci.ingredient().toNetwork(buf);
             buf.writeInt(ci.count());
         }
-        buf.writeInt(recipe.getIngredientAmount());      // <-- schreiben
+
+        buf.writeInt(recipe.getIngredientAmount());
         buf.writeItem(recipe.getResultItem(null));
-        buf.writeInt(recipe.getResultItem(null).getCount()); // <-- schreiben
         buf.writeInt(recipe.getTime());
         buf.writeInt(recipe.getWaterLevelReduction());
-        buf.writeInt(recipe.getStirCount());
+        buf.writeInt(recipe.getInteractionCount());
+
+        buf.writeInt(recipe.getTools().size());
+        for (Ingredient tool : recipe.getTools()) {
+            tool.toNetwork(buf);
+        }
+
+        buf.writeInt(recipe.getByproducts().size());
+
+        for (Byproduct byproduct : recipe.getByproducts()) {
+            buf.writeItem(byproduct.stack());
+            buf.writeFloat(byproduct.chance());
+            buf.writeUtf(byproduct.trigger().getId());
+        }
+
         buf.writeUtf(recipe.getMode().getId());
     }
 }

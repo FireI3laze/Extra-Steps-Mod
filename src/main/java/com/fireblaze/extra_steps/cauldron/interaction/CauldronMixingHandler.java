@@ -1,6 +1,8 @@
 package com.fireblaze.extra_steps.cauldron.interaction;
 
 import com.fireblaze.extra_steps.cauldron.data.CauldronMixingData;
+import com.fireblaze.extra_steps.processing.Byproduct;
+import com.fireblaze.extra_steps.processing.ByproductTrigger;
 import com.fireblaze.extra_steps.processing.ProcessingMode;
 import com.fireblaze.extra_steps.processing.ProcessingRecipe;
 import com.fireblaze.extra_steps.registry.ModBlocks;
@@ -9,8 +11,6 @@ import com.fireblaze.extra_steps.registry.ModSounds;
 import com.fireblaze.extra_steps.registry.ModTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -24,7 +24,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShovelItem;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -34,7 +33,6 @@ import net.minecraftforge.registries.RegistryObject;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class CauldronMixingHandler {
     private static final List<RegistryObject<SoundEvent>> STIR_SOUNDS = List.of(
@@ -69,13 +67,12 @@ public class CauldronMixingHandler {
             return InteractionResult.PASS;
         }
 
+        CauldronMixingData data = CauldronMixingData.get(level);
+        if (data == null) return InteractionResult.PASS;
+
+        NonNullList<ItemStack> inv = data.getInventory(pos);
+
         if (stack.isEmpty()) {
-
-            CauldronMixingData data = CauldronMixingData.get(level);
-            if (data == null) return InteractionResult.PASS;
-
-            NonNullList<ItemStack> inv = data.getInventory(pos);
-
             // von hinten nach vorne → letzter belegter Slot
             for (int i = inv.size() - 1; i >= 0; i--) {
                 ItemStack stored = inv.get(i);
@@ -108,38 +105,55 @@ public class CauldronMixingHandler {
 
             return InteractionResult.SUCCESS; // nichts drin, aber handled
         }
+        else {
+            // Noch KEIN fertiges Rezept → Ingredient hinzufügen
+            // 1. Ingredients immer einlagern
+            if (isValidIngredient(level, stack)) {
 
-        if (!stack.isEmpty() && !(stack.getItem() instanceof ShovelItem)) {
+                for (int i = 0; i < inv.size(); i++) {
 
-            if (!isValidIngredient(level, stack)) {
+                    if (inv.get(i).isEmpty()) {
+
+                        inv.set(i, stack.copy());
+                        stack.setCount(0);
+
+                        data.setInventory(pos, inv, (ServerLevel) level);
+
+                        level.playSound(
+                                null,
+                                pos,
+                                SoundEvents.GENERIC_SPLASH,
+                                SoundSource.BLOCKS,
+                                0.3f,
+                                1.35f
+                        );
+
+                        return InteractionResult.SUCCESS;
+                    }
+                }
+
+                return InteractionResult.SUCCESS;
+            }
+
+// 2. Rezept suchen
+            ProcessingRecipe recipe = findMatchingRecipe(level, inv);
+
+            if (recipe == null) {
                 return InteractionResult.PASS;
             }
 
-            CauldronMixingData data = CauldronMixingData.get(level);
-            NonNullList<ItemStack> inv = data.getInventory(pos);
-
-            for (int i = 0; i < inv.size(); i++) {
-                if (inv.get(i).isEmpty()) {
-                    inv.set(i, stack.split(1));
-                    data.setInventory(pos, inv, (ServerLevel) level);
-                    return InteractionResult.SUCCESS;
-                }
+// 3. Tool prüfen
+            if (!recipe.isToolValid(stack)) {
+                return InteractionResult.PASS;
             }
-
-            return InteractionResult.SUCCESS;
         }
-
-        if (!(stack.getItem() instanceof ShovelItem)) {
-            return InteractionResult.PASS;
-        }
-
-        CauldronMixingData data = CauldronMixingData.get(level);
-        if (data == null) return InteractionResult.PASS;
-
-        NonNullList<ItemStack> inv = data.getInventory(pos);
 
         ProcessingRecipe recipe = findMatchingRecipe(level, inv);
         if (recipe == null) return InteractionResult.PASS;
+
+        if (!(recipe.isToolValid(stack))) {
+            return InteractionResult.PASS;
+        }
 
         int waterLevel = 0;
 
@@ -157,7 +171,7 @@ public class CauldronMixingHandler {
         long gameTime = level.getGameTime();
         long last = data.getLastStirTick(pos);
 
-        player.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 5, (10 * recipe.getStirCount()), false, false)); //20
+        player.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 5, (10 * recipe.getInteractionCount()), false, false)); //20
 
         // z.B. 10 Ticks = 0.5 Sekunden
         if (gameTime - last < 10) {
@@ -172,7 +186,18 @@ public class CauldronMixingHandler {
         data.addHit(pos);
         stack.hurtAndBreak(1, player, p -> p.broadcastBreakEvent(hand));
 
-        if (hits < recipe.getStirCount()) {
+        for (Byproduct byproduct : recipe.getByproducts()) {
+
+            if (byproduct.trigger() != ByproductTrigger.PER_INTERACTION)
+                continue;
+
+            if (level.random.nextFloat() > byproduct.chance())
+                continue;
+
+            dropItem(level, pos, byproduct.stack().copy());
+        }
+
+        if (hits < recipe.getInteractionCount()) {
             level.playSound(
                     null,
                     pos,
@@ -202,8 +227,6 @@ public class CauldronMixingHandler {
 
         data.setInventory(pos, inv, (ServerLevel) level);
 
-        data.setInventory(pos, inv, (ServerLevel) level);
-
         // 👉 Wasser reduzieren
         int newLevel = waterLevel - recipe.getWaterLevelReduction();
 
@@ -223,16 +246,31 @@ public class CauldronMixingHandler {
 
         // 👉 Result droppen
         ItemStack result = recipe.getResultItem(level.registryAccess()).copy();
+        dropItem(level, pos, result);
 
+        // 👉 Byproducts
+        for (Byproduct byproduct : recipe.getByproducts()) {
+
+            if (byproduct.trigger() != ByproductTrigger.ON_COMPLETE)
+                continue;
+
+            if (level.random.nextFloat() > byproduct.chance())
+                continue;
+
+            dropItem(level, pos, byproduct.stack().copy());
+        }
+
+        return InteractionResult.SUCCESS;
+    }
+
+    private static void dropItem(Level level, BlockPos pos, ItemStack stack) {
         Containers.dropItemStack(
                 level,
                 pos.getX() + 0.5,
                 pos.getY() + 1.1,
                 pos.getZ() + 0.5,
-                result
+                stack
         );
-
-        return InteractionResult.SUCCESS;
     }
 
     public static boolean isValidIngredient(Level level, ItemStack stack) {
@@ -280,7 +318,6 @@ public class CauldronMixingHandler {
     }
 
     private static boolean consumeIngredients(NonNullList<ItemStack> inv, ProcessingRecipe recipe) {
-
         for (ProcessingRecipe.CountedIngredient ci : recipe.getCountedIngredients()) {
 
             int needed = ci.count();

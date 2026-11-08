@@ -2,6 +2,7 @@ package com.fireblaze.extra_steps.util;
 
 import com.fireblaze.extra_steps.blockentity.WoodenLyeWaterCauldronBlockEntity;
 import com.fireblaze.extra_steps.client.color.GenericColors;
+import com.fireblaze.extra_steps.registry.ModBlocks;
 import com.fireblaze.extra_steps.registry.ModItems;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tags.ItemTags;

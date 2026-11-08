@@ -25,8 +25,6 @@ public class DryingEnvironment {
             speed -= 0.5f;
         }
 
-        //System.out.println(speed);
-
         // Biome temperature
         Biome biome = level.getBiome(pos).value();
         float temp = biome.getBaseTemperature();

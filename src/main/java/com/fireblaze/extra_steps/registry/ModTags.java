@@ -24,5 +24,6 @@ public class ModTags {
     }
 
     public static final TagKey<Item> COLORABLE_BLOCKS = Items.COLORABLE_BLOCKS;
+
     public static final TagKey<Block> VALID_MIXING_CAULDRONS = Blocks.VALID_MIXING_CAULDRONS;
 }

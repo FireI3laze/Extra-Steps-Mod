@@ -1,6 +1,8 @@
 {
   "type": "extra_steps:processing",
   "mode": "compressing",
-  "ingredient": { "item": "extra_steps:brushed_wool" },
+  "ingredients": [
+    { "item": "extra_steps:brushed_wool" }
+  ],
   "result": "extra_steps:colorable_wool"
 }

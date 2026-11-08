@@ -12,8 +12,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BrushItem;
 import net.minecraft.world.item.ItemStack;
@@ -84,48 +82,38 @@ public class DryingRackBlock extends Block implements EntityBlock {
 
         ItemStack held = player.getItemInHand(hand);
         ItemStack offhandHeld = player.getOffhandItem();
+        ItemStack insertableItem = null;
         ItemStack stored = rack.getItemInSlot0();
 
-        if (stored.isEmpty() && !held.isEmpty() && ProcessingItemRegistry.isValidRackItem(held)) {
-            // Item auf Server einfügen
-            rack.getInventoryHandler().insertItem(0, held.split(1), false);
-            rack.markForRenderUpdate();
+        if (ProcessingItemRegistry.isValidRackItem(held)) insertableItem = held;
+        else if (ProcessingItemRegistry.isValidRackItem(offhandHeld)) insertableItem = offhandHeld;
 
-            return InteractionResult.SUCCESS;
-        }
-
-        if (stored.isEmpty() && !offhandHeld.isEmpty() && ProcessingItemRegistry.isValidRackItem(offhandHeld)) {
+        if (insertableItem != null && stored.isEmpty()) {
             // Item auf Server einfügen
-            rack.getInventoryHandler().insertItem(0, offhandHeld.split(1), false);
+            rack.getInventoryHandler().insertItem(0, insertableItem.split(1), false);
             rack.markForRenderUpdate();
+            level.playSound(null, pos,
+                    SoundEvents.ITEM_FRAME_ADD_ITEM,
+                    SoundSource.BLOCKS,
+                    0.4f, 1.0f
+            );
 
             return InteractionResult.SUCCESS;
         }
 
         if(!stored.isEmpty()) {
 
-            // Blockiere normales Aufheben, wenn Cooldown aktiv
             if(rack.pickupCooldown > 0) {
                 return InteractionResult.SUCCESS;
             }
 
-            boolean isWoolBrush = held.getItem() instanceof WoolBrushItem;
-            boolean isVanillaBrush = held.getItem() instanceof BrushItem;
-
-            boolean validBrush = isWoolBrush || (isVanillaBrush && ModConfigHandler.allowVanillaBrush.get());
-
-            // --- Brushing-Check ---
-            if(validBrush && rack.getRecipeByMode(ProcessingMode.BRUSHING).isPresent()) {
-                rack.brushing(player);
-
-                player.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 5, 3, false, false));
-                if(rack.brushInteractionCooldown > 0) return InteractionResult.CONSUME;
-
-                rack.brushingSound();
-                rack.brushInteractionCooldown = 15;
-                rack.damageTool(player);
-
-                return InteractionResult.SUCCESS;
+            // --- Brushing ---
+            Optional<ProcessingRecipe> recipe = rack.getRecipeByMode(ProcessingMode.BRUSHING);
+            if (recipe.isPresent()) {
+                if (recipe.get().isToolValid(held)) {
+                    rack.interaction(player, recipe.get());
+                    return InteractionResult.SUCCESS;
+                }
             }
 
             // --- Scraping ---
@@ -133,11 +121,7 @@ public class DryingRackBlock extends Block implements EntityBlock {
                 Optional<ProcessingRecipe> scrapingRecipe = rack.getRecipeByMode(ProcessingMode.SCRAPING);
 
                 if(ScrapingHelper.canScrape(stored, player, scrapingRecipe)) {
-                    rack.getInventoryHandler().extractItem(0, 1, false);
-                    rack.getInventoryHandler().insertItem(0, new ItemStack(scrapingRecipe.get().getResultItem(null).getItem()), false);
-                    rack.damageTool(player);
-                    player.level().playSound(null, pos, SoundEvents.ARMOR_EQUIP_LEATHER, SoundSource.BLOCKS, 0.5f, 1.0f);
-                    rack.markForRenderUpdate();
+                    rack.interaction(player, rack.getRecipeByMode(ProcessingMode.SCRAPING).get());
                     return InteractionResult.SUCCESS;
                 }
             }
@@ -145,15 +129,18 @@ public class DryingRackBlock extends Block implements EntityBlock {
             // --- Normales Aufheben ---
             ItemStack toPickup = stored.copy();
 
-            // Prüfen ob Spieler Platz im Inventar hat
+            level.playSound(null, pos,
+                    SoundEvents.ITEM_PICKUP,
+                    SoundSource.BLOCKS,
+                    0.4f, 1.0f
+            );
+
             boolean added = player.getInventory().add(toPickup);
 
             if(!added) {
-                // Inventar voll → Item droppen lassen
                 player.drop(toPickup, false);
             }
 
-            // Inventar des Racks leeren
             rack.getInventoryHandler().extractItem(0, stored.getCount(), false);
             rack.markForRenderUpdate();
             return InteractionResult.SUCCESS;

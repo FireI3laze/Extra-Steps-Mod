@@ -2,6 +2,5 @@
   "type": "extra_steps:processing",
   "mode": "lye_water",
   "ingredient": { "item": "extra_steps:ash" },
-  "result": "extra_steps:lye_water_bucket",
-  "time": 0
+  "result": "extra_steps:lye_water_bucket"
 }

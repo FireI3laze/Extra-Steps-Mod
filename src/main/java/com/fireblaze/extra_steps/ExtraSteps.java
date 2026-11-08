@@ -114,6 +114,11 @@ public class ExtraSteps
                     RenderType.translucent()
             );
 
+            ItemBlockRenderTypes.setRenderLayer(
+                    ModBlocks.COLORABLE_STAINED_GLASS.get(),
+                    RenderType.translucent()
+            );
+
             ItemBlockRenderTypes.setRenderLayer(ModFluids.SOURCE_LYE_WATER.get(), RenderType.translucent());
             ItemBlockRenderTypes.setRenderLayer(ModFluids.FLOWING_LYE_WATER.get(), RenderType.translucent());
 
@@ -125,7 +130,8 @@ public class ExtraSteps
             Minecraft.getInstance().getItemColors().register(
                     new DryingItemColor(),
                     ModItems.WET_HIDE.get(),
-                    ModItems.WET_WOOL.get());
+                    ModItems.WET_WOOL.get(),
+                    ModItems.PULP_BLOCK.get());
 
             Minecraft.getInstance().getItemColors().register(
                     new GenericItemColoring(),

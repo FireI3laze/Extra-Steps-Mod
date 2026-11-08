@@ -54,8 +54,9 @@ public class JumpCompressionHandler {
                 .anyMatch(ingredient -> ingredient.test(stack));
         if (!matchesIngredient) return;
 
-        if (basket.getInventoryHandler().getStackInSlot(0).getCount() < recipe.getIngredientAmount()) return;
-        basket.getInventoryHandler().extractItem(0, recipe.getIngredientAmount(), false);
+        //if (basket.getInventoryHandler().getStackInSlot(0).getCount() < recipe.getIngredientAmount()) return;
+        if (basket.getInventoryHandler().getStackInSlot(0).getCount() < recipe.getCountedIngredients().get(0).count()) return;
+        basket.getInventoryHandler().extractItem(0, recipe.getCountedIngredients().get(0).count(), false);
 
         ItemStack inputCopy = stack.copy();
         ItemStack drop;
@@ -74,14 +75,20 @@ public class JumpCompressionHandler {
             Block vanillaWool = GenericColorHelper.getBlockFromGenericColor(closest);
 
             // 4. Erstelle das ItemStack zum Droppen
-            drop = new ItemStack(vanillaWool.asItem());
+            drop = new ItemStack(
+                    vanillaWool.asItem(),
+                    recipe.getResultItem(null).getCount()
+            );
         } else if (stack.hasTag() && stack.getTag().contains(GenericColorHelper.FILL_FACTOR)) {
-            // Dein eigener Wool Block
-            drop = new ItemStack(recipe.getResultItem(null).getItem());
+
+            drop = recipe.getResultItem(null).copy();
 
             // Farbe vom Input übernehmen
             GenericColorHelper.copyColor(inputCopy, drop);
-        } else drop = new ItemStack(recipe.getResultItem(null).getItem());
+
+        } else {
+            drop = recipe.getResultItem(null).copy();
+        }
 
         player.level().addFreshEntity(new net.minecraft.world.entity.item.ItemEntity(
                 player.level(),
@@ -90,6 +97,27 @@ public class JumpCompressionHandler {
                 player.getZ(),
                 drop
         ));
+
+        recipe.getByproducts().forEach(byproduct -> {
+            // Chance prüfen
+            if (!byproduct.roll(player.level().random))
+                return;
+
+            ItemStack byproductStack = byproduct.stack().copy();
+
+            // Optional: Farbe übernehmen
+            if (GenericColorHelper.hasColor(inputCopy)) {
+                GenericColorHelper.copyColor(inputCopy, byproductStack);
+            }
+
+            player.level().addFreshEntity(new net.minecraft.world.entity.item.ItemEntity(
+                    player.level(),
+                    player.getX(),
+                    player.getY(),
+                    player.getZ(),
+                    byproductStack
+            ));
+        });
 
         player.level().playSound(null, pos, SoundEvents.WOOL_HIT, SoundSource.BLOCKS, 1.0f, 1.0f);
     }

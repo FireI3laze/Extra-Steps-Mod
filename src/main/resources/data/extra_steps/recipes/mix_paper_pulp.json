@@ -1,0 +1,14 @@
+{
+  "type": "extra_steps:processing",
+  "mode": "mixing",
+  "ingredients": [
+    { "item": "extra_steps:plant_fiber",
+      "count": 8
+    }
+  ],
+  "result": { "item": "extra_steps:pulp",
+    "count": 4
+  },
+  "interaction_count": 4,
+  "water_level_consumption": 1
+}

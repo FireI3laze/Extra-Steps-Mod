@@ -52,6 +52,7 @@ public class BasketBlock extends Block implements EntityBlock {
         }
 
         var recipe = basket.getRecipeForItem(held, ProcessingMode.COMPRESSING).orElse(null);
+        if (recipe == null) return InteractionResult.PASS;
         boolean matchesIngredient = recipe.getIngredients().stream()
                 .anyMatch(ingredient -> ingredient.test(held));
         if(matchesIngredient) {

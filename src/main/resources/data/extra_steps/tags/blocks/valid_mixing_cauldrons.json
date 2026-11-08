@@ -2,7 +2,9 @@
   "values": [
     "extra_steps:wooden_cauldron",
     "extra_steps:wooden_water_cauldron",
+    "extra_steps:wooden_lye_water_cauldron",
     "minecraft:cauldron",
-    "minecraft:water_cauldron"
+    "minecraft:water_cauldron",
+    "extra_steps:lye_water_cauldron"
   ]
 }

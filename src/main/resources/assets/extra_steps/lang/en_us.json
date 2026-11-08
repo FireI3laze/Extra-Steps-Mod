@@ -29,9 +29,15 @@
   "item.extra_steps.scraped_hide": "Scraped Rawhide",
   "item.extra_steps.wet_hide": "Wet Hide",
 
+  "item.extra_steps.plant_fiber": "Plant Fiber",
+  "item.extra_steps.pulp": "Pulp",
+  "item.extra_steps.pulp_block": "Pulp Block",
+  "item.extra_steps.paper_block": "Paper Block",
+
   "item.extra_steps.ash": "Ash",
   "fluid.extra_steps.lye_water": "Lye Water",
   "block.extra_steps.lye_water": "Lye Water",
+  "block.extra_steps.lye_water_block": "Lye Water",
   "fluid_type.extra_steps.lye_water_fluid": "Lye Water",
   "item.extra_steps.lye_water_bucket": "Lye-Water Bucket",
   "item.extra_steps.lye_water_glass_bottle": "Lye-Water Bottle"
